@@ -144,7 +144,7 @@ h3 {
     width: 180px;
 }
 
-#new-todo-box {
+#new-wish-box {
     margin-top: 10px;
     margin-bottom: 10px;
     margin-left: 60px;
@@ -154,7 +154,7 @@ h3 {
     height: 40px;
 }
 
-#new-todo {
+#new-wish {
    position: absolute;
    width: 100%;
 }
@@ -164,7 +164,7 @@ h3 {
     margin-left: 5px;
 }
 
-#item-list .todo {
+#item-list .wish {
     display: block;
     height: 50px;
     position: relative;
@@ -172,7 +172,7 @@ h3 {
     border-top: 1px solid #ccc;
 }
 
-#item-list .todo .destroy {
+#item-list .wish .destroy {
     cursor: pointer;
     position: absolute;
     left: 5px;
@@ -181,7 +181,7 @@ h3 {
     width: 20px;
 }
 
-#item-list .todo .display, #item-list .todo .edit {
+#item-list .wish .display, #item-list .wish .edit {
     margin-left: 30px;
     height: 100%;
     width: auto;
@@ -190,40 +190,40 @@ h3 {
     line-height: 1;
 }
 
-#todo-input {
+#wish-input {
     width: 300px;
     position: relative;
     top: -3px;
 }
 
-#item-list .done .todo-text {
+#item-list .done .wish-text {
     text-decoration: line-through;
     color: #999;
 }
 
-#item-list .todo:hover .destroy {
+#item-list .wish:hover .destroy {
     background: url('/destroy.png') no-repeat 0 0;
 }
 
-#item-list .todo .destroy:hover {
+#item-list .wish .destroy:hover {
     background-position: 0 -20px;
 }
 
-#item-list .todo .item-tags {
+#item-list .wish .item-tags {
     overflow: auto;
     float: right;
     margin-right: 8px;
 }
 
-#item-list .todo .item-tags .tag {
+#item-list .wish .item-tags .tag {
     margin-top: 15px;
 }
 
-#item-list .todo .item-tags .removable_tag {
+#item-list .wish .item-tags .removable_tag {
     padding-right: 22px;
 }
 
-#item-list .todo .item-tags .tag .remove {
+#item-list .wish .item-tags .tag .remove {
     position: absolute;
     top: 0;
     right: 4px;
@@ -232,28 +232,28 @@ h3 {
     background: url("/close_16.png") no-repeat 0 center;
 }
 
-#item-list .todo .item-tags .tag .remove:hover {
+#item-list .wish .item-tags .tag .remove:hover {
     background-position: -16px center;
 }
 
-#item-list .todo .item-tags div.addtag {
+#item-list .wish .item-tags div.addtag {
     background: none;
     color: #333;
     border: 1px dashed #999;
 }
 
-#item-list .todo .check {
+#item-list .wish .check {
     float: left;
     width: 25px;
 }
 
-#item-list .todo .todo-text {
+#item-list .wish .wish-text {
     float: left;
     margin-left: 10px;
     font-size: 100%;
 }
 
-#item-list .todo .edit input {
+#item-list .wish .edit input {
     margin-left: 35px;
 }
 

@@ -2,7 +2,7 @@
 
 // Define Minimongo collections to match server/publish.js.
 Lists = new Meteor.Collection("lists");
-Todos = new Meteor.Collection("todos");
+Wishes = new Meteor.Collection("wishes");
 
 // ID of currently selected list
 Session.set('list_id', null);
@@ -10,13 +10,13 @@ Session.set('list_id', null);
 // Name of currently selected tag for filtering
 Session.set('tag_filter', null);
 
-// When adding tag to a todo, ID of the todo
+// When adding tag to a wish, ID of the wish
 Session.set('editing_addtag', null);
 
 // When editing a list name, ID of the list
 Session.set('editing_listname', null);
 
-// When editing todo text, ID of the todo
+// When editing wish text, ID of the wish
 Session.set('editing_itemname', null);
 
 // Subscribe to 'lists' collection on startup.
@@ -29,11 +29,11 @@ Meteor.subscribe('lists', function () {
   }
 });
 
-// Always be subscribed to the todos for the selected list.
+// Always be subscribed to the wishes for the selected list.
 Meteor.autosubscribe(function () {
   var list_id = Session.get('list_id');
   if (list_id)
-    Meteor.subscribe('todos', list_id);
+    Meteor.subscribe('wishes', list_id);
 });
 
 
@@ -127,18 +127,18 @@ Template.lists.editing = function () {
   return Session.equals('editing_listname', this._id);
 };
 
-////////// Todos //////////
+////////// wishes //////////
 
-Template.todos.any_list_selected = function () {
+Template.wishes.any_list_selected = function () {
   return !Session.equals('list_id', null);
 };
 
-Template.todos.events(okCancelEvents(
-  '#new-todo',
+Template.wishes.events(okCancelEvents(
+  '#new-wish',
   {
     ok: function (text, evt) {
       var tag = Session.get('tag_filter');
-      Todos.insert({
+      Wishes.insert({
         text: text,
         list_id: Session.get('list_id'),
         done: false,
@@ -149,8 +149,8 @@ Template.todos.events(okCancelEvents(
     }
   }));
 
-Template.todos.todos = function () {
-  // Determine which todos to display in main pane,
+Template.wishes.wishes = function () {
+  // Determine which wishes to display in main pane,
   // selected based on list_id and tag_filter.
 
   var list_id = Session.get('list_id');
@@ -162,39 +162,39 @@ Template.todos.todos = function () {
   if (tag_filter)
     sel.tags = tag_filter;
 
-  return Todos.find(sel, {sort: {votes: 1}});
+  return Wishes.find(sel, {sort: {votes: 1}});
 };
 
-Template.todo_item.tag_objs = function () {
-  var todo_id = this._id;
+Template.wish.tag_objs = function () {
+  var wish_id = this._id;
   return _.map(this.tags || [], function (tag) {
-    return {todo_id: todo_id, tag: tag};
+    return {wish_id: wish_id, tag: tag};
   });
 };
 
-Template.todo_item.done_class = function () {
+Template.wish.done_class = function () {
   return this.done ? 'done' : '';
 };
 
-Template.todo_item.done_checkbox = function () {
+Template.wish.done_checkbox = function () {
   return this.done ? 'checked="checked"' : '';
 };
 
-Template.todo_item.editing = function () {
+Template.wish.editing = function () {
   return Session.equals('editing_itemname', this._id);
 };
 
-Template.todo_item.adding_tag = function () {
+Template.wish.adding_tag = function () {
   return Session.equals('editing_addtag', this._id);
 };
 
-Template.todo_item.events({
+Template.wish.events({
   'click .check': function () {
-    Todos.update(this._id, {$set: {done: !this.done}});
+    Wishes.update(this._id, {$set: {done: !this.done}});
   },
 
   'click .destroy': function () {
-    Todos.remove(this._id);
+    Wishes.remove(this._id);
   },
 
   'click .addtag': function (evt, tmpl) {
@@ -203,29 +203,29 @@ Template.todo_item.events({
     activateInput(tmpl.find("#edittag-input"));
   },
 
-  'dblclick .display .todo-text': function (evt, tmpl) {
+  'dblclick .display .wish-text': function (evt, tmpl) {
     Session.set('editing_itemname', this._id);
     Meteor.flush(); // update DOM before focus
-    activateInput(tmpl.find("#todo-input"));
+    activateInput(tmpl.find("#wish-input"));
   },
 
   'click .remove': function (evt) {
     var tag = this.tag;
-    var id = this.todo_id;
+    var id = this.wish_id;
 
     evt.target.parentNode.style.opacity = 0;
     // wait for CSS animation to finish
     Meteor.setTimeout(function () {
-      Todos.update({_id: id}, {$pull: {tags: tag}});
+      Wishes.update({_id: id}, {$pull: {tags: tag}});
     }, 300);
   }
 });
 
-Template.todo_item.events(okCancelEvents(
-  '#todo-input',
+Template.wish.events(okCancelEvents(
+  '#wish-input',
   {
     ok: function (value) {
-      Todos.update(this._id, {$set: {text: value}});
+      Wishes.update(this._id, {$set: {text: value}});
       Session.set('editing_itemname', null);
     },
     cancel: function () {
@@ -233,11 +233,11 @@ Template.todo_item.events(okCancelEvents(
     }
   }));
 
-Template.todo_item.events(okCancelEvents(
+Template.wish.events(okCancelEvents(
   '#edittag-input',
   {
     ok: function (value) {
-      Todos.update(this._id, {$addToSet: {tags: value}});
+      Wishes.update(this._id, {$addToSet: {tags: value}});
       Session.set('editing_addtag', null);
     },
     cancel: function () {
@@ -247,13 +247,13 @@ Template.todo_item.events(okCancelEvents(
 
 ////////// Tag Filter //////////
 
-// Pick out the unique tags from all todos in current list.
+// Pick out the unique tags from all wishes in current list.
 Template.tag_filter.tags = function () {
   var tag_infos = [];
   var total_count = 0;
 
-  Todos.find({list_id: Session.get('list_id')}).forEach(function (todo) {
-    _.each(todo.tags, function (tag) {
+  Wishes.find({list_id: Session.get('list_id')}).forEach(function (wish) {
+    _.each(wish.tags, function (tag) {
       var tag_info = _.find(tag_infos, function (x) { return x.tag === tag; });
       if (! tag_info)
         tag_infos.push({tag: tag, count: 1});
@@ -288,7 +288,7 @@ Template.tag_filter.events({
 
 ////////// Tracking selected list in URL //////////
 
-var TodosRouter = Backbone.Router.extend({
+var wishesRouter = Backbone.Router.extend({
   routes: {
     ":list_id": "main"
   },
@@ -301,7 +301,7 @@ var TodosRouter = Backbone.Router.extend({
   }
 });
 
-Router = new TodosRouter;
+Router = new wishesRouter;
 
 Meteor.startup(function () {
   Backbone.history.start({pushState: true});

@@ -1,5 +1,5 @@
 <head>
-  <title>Todos</title>
+  <title>Wishing Wall</title>
 </head>
 
 <body>
@@ -8,7 +8,7 @@
   </div>
 
   <div id="main-pane">
-    {{> todos}}
+    {{> wishes}}
   </div>
 
   <div id="side-pane">
@@ -17,7 +17,7 @@
 </body>
 
 <template name="lists">
-  <h3>Todo Lists</h3>
+  <h3>Wish Lists</h3>
   <div id="lists">
     {{#each lists}}
       <div class="list {{selected}}">
@@ -40,32 +40,32 @@
   </div>
 </template>
 
-<template name="todos">
+<template name="wishes">
   {{#if any_list_selected}}
   <div id="items-view">
-    <div id="new-todo-box">
-      <input type="text" id="new-todo" placeholder="New item" />
+    <div id="new-wish-box">
+      <input type="text" id="new-wish" placeholder="New wish" />
     </div>
     <ul id="item-list">
-      {{#each todos}}
-        {{> todo_item}}
+      {{#each wishes}}
+        {{> wish}}
       {{/each}}
     </ul>
   </div>
   {{/if}}
 </template>
 
-<template name="todo_item">
-  <li class="todo {{done_class}}">
+<template name="wish">
+  <li class="wish {{done_class}}">
     {{#if editing}}
       <div class="edit">
-        <input id="todo-input" type="text" value="{{text}}" />
+        <input id="wish-input" type="text" value="{{text}}" />
       </div>
     {{else}}
       <div class="destroy"></div>
       <div class="display">
         <input class="check" name="markdone" type="checkbox" {{{done_checkbox}}} />
-        <div class="todo-text">{{text}}</div>
+        <div class="wish-text">{{text}}</div>
       </div>
     {{/if}}
     <div class="item-tags">
