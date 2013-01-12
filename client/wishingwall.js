@@ -2,7 +2,11 @@
 
 // Define Minimongo collections to match server/publish.js.
 Lists = new Meteor.Collection("lists");
-Wishes = new Meteor.Collection("wishes");
+CurrentList = new Meteor.Collection("current_list");
+
+function currentList(){
+	return CurrentList.findOne({});
+}
 
 // ID of currently selected list
 Session.set('list_id', null);
@@ -33,7 +37,7 @@ Meteor.subscribe('lists', function () {
 Meteor.autosubscribe(function () {
   var list_id = Session.get('list_id');
   if (list_id)
-    Meteor.subscribe('wishes', list_id);
+    Meteor.subscribe('current_list', list_id);
 });
 
 
@@ -97,7 +101,7 @@ Template.lists.events(okCancelEvents(
   '#new-list',
   {
     ok: function (text, evt) {
-      var id = Lists.insert({name: text});
+      var id = Lists.insert({name: text, wishes: []});
       Router.setList(id);
       evt.target.value = "";
     }
@@ -115,15 +119,20 @@ Template.lists.events(okCancelEvents(
     }
   }));
 
-Template.lists.selected = function () {
+Template.list.selected = function () {
   return Session.equals('list_id', this._id) ? 'selected' : '';
 };
 
-Template.lists.name_class = function () {
+Template.list.count = function () {
+  return Session.equals('list_id', this._id) ? 'selected' : '';
+};
+
+
+Template.list.name_class = function () {
   return this.name ? '' : 'empty';
 };
 
-Template.lists.editing = function () {
+Template.list.editing = function () {
   return Session.equals('editing_listname', this._id);
 };
 
@@ -138,17 +147,21 @@ Template.wishes.events(okCancelEvents(
   {
     ok: function (text, evt) {
       var tag = Session.get('tag_filter');
-      Wishes.insert({
-        text: text,
-        list_id: Session.get('list_id'),
-        done: false,
-        timestamp: (new Date()).getTime(),
-        tags: tag ? [tag] : []
-      });
+      if (currentList())
+	      currentList().wishes.insert({
+			text: text,
+			done: false,
+			tags: tag ? [tag] : []}
+	      );
       evt.target.value = '';
     }
   }));
-
+Template.wishes.list = function () {
+	var list = Lists.findOne({_id:Session.get('list_id')});
+	if (list) {
+		return list.name;
+	}
+}
 Template.wishes.wishes = function () {
   // Determine which wishes to display in main pane,
   // selected based on list_id and tag_filter.
@@ -161,8 +174,8 @@ Template.wishes.wishes = function () {
   var tag_filter = Session.get('tag_filter');
   if (tag_filter)
     sel.tags = tag_filter;
-
-  return Wishes.find(sel, {sort: {votes: 1}});
+  if (currentList())
+	  return currentList().wishes.find(sel, {sort: {votes: -1}});
 };
 
 Template.wish.tag_objs = function () {
@@ -190,11 +203,14 @@ Template.wish.adding_tag = function () {
 
 Template.wish.events({
   'click .check': function () {
-    Wishes.update(this._id, {$set: {done: !this.done}});
+    currentList().wishes.update(this._id, {$set: {done: !this.done}});
   },
 
   'click .destroy': function () {
-    Wishes.remove(this._id);
+    currentList().wishes.remove(this._id);
+  },
+  'click .voteup': function () {
+    currentList().wishes.update(this._id, {$inc: {votes:1}});
   },
 
   'click .addtag': function (evt, tmpl) {
@@ -216,7 +232,7 @@ Template.wish.events({
     evt.target.parentNode.style.opacity = 0;
     // wait for CSS animation to finish
     Meteor.setTimeout(function () {
-      Wishes.update({_id: id}, {$pull: {tags: tag}});
+      currentList().wishes.update({_id: id}, {$pull: {tags: tag}});
     }, 300);
   }
 });
@@ -225,7 +241,7 @@ Template.wish.events(okCancelEvents(
   '#wish-input',
   {
     ok: function (value) {
-      Wishes.update(this._id, {$set: {text: value}});
+      currentList().wishes.update(this._id, {$set: {text: value}});
       Session.set('editing_itemname', null);
     },
     cancel: function () {
@@ -237,7 +253,7 @@ Template.wish.events(okCancelEvents(
   '#edittag-input',
   {
     ok: function (value) {
-      Wishes.update(this._id, {$addToSet: {tags: value}});
+      currentList().wishes.update(this._id, {$addToSet: {tags: value}});
       Session.set('editing_addtag', null);
     },
     cancel: function () {
@@ -252,20 +268,21 @@ Template.tag_filter.tags = function () {
   var tag_infos = [];
   var total_count = 0;
 
-  Wishes.find({list_id: Session.get('list_id')}).forEach(function (wish) {
-    _.each(wish.tags, function (tag) {
-      var tag_info = _.find(tag_infos, function (x) { return x.tag === tag; });
-      if (! tag_info)
-        tag_infos.push({tag: tag, count: 1});
-      else
-        tag_info.count++;
-    });
-    total_count++;
-  });
+  if (currentList()){
+	  currentList().wishes.find({list_id: Session.get('list_id')}).forEach(function (wish) {
+	    _.each(wish.tags, function (tag) {
+	      var tag_info = _.find(tag_infos, function (x) { return x.tag === tag; });
+	      if (! tag_info)
+		tag_infos.push({tag: tag, count: 1});
+	      else
+		tag_info.count++;
+	    });
+	    total_count++;
+	  });
 
-  tag_infos = _.sortBy(tag_infos, function (x) { return x.tag; });
-  tag_infos.unshift({tag: null, count: total_count});
-
+	  tag_infos = _.sortBy(tag_infos, function (x) { return x.tag; });
+	  tag_infos.unshift({tag: null, count: total_count});
+  }
   return tag_infos;
 };
 

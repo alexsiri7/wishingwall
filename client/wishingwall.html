@@ -17,9 +17,18 @@
 </body>
 
 <template name="lists">
-  <h3>Wish Lists</h3>
+  <h3>I wish for...</h3>
   <div id="lists">
     {{#each lists}}
+	{{> list}}
+    {{/each}}
+  </div>
+  <div id="createList">
+    <input type="text" id="new-list" placeholder="New list" />
+  </div>
+</template>
+
+<template name="list">
       <div class="list {{selected}}">
         {{#if editing}}
           <div class="edit">
@@ -33,15 +42,11 @@
           </div>
         {{/if}}
       </div>
-    {{/each}}
-  </div>
-  <div id="createList">
-    <input type="text" id="new-list" placeholder="New list" />
-  </div>
 </template>
 
 <template name="wishes">
   {{#if any_list_selected}}
+  <h3>I wish for {{list}} to...</h3>
   <div id="items-view">
     <div id="new-wish-box">
       <input type="text" id="new-wish" placeholder="New wish" />
@@ -65,7 +70,8 @@
       <div class="destroy"></div>
       <div class="display">
         <input class="check" name="markdone" type="checkbox" {{{done_checkbox}}} />
-        <div class="wish-text">{{text}}</div>
+        <div class="wish-text">{{text}} {{votes}}</div>
+        <input class="voteup" name="voteup" type="button" value="vote"/>
       </div>
     {{/if}}
     <div class="item-tags">

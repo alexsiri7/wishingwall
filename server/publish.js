@@ -3,7 +3,7 @@ Lists = new Meteor.Collection("lists");
 
 // Publish complete set of lists to all clients.
 Meteor.publish('lists', function () {
-  return Lists.find();
+  return Lists.find({},{name: 1});
 });
 
 
@@ -15,7 +15,7 @@ Meteor.publish('lists', function () {
 Wishes = new Meteor.Collection("wishes");
 
 // Publish all items for requested list_id.
-Meteor.publish('wishes', function (list_id) {
-  return Wishes.find({list_id: list_id});
+Meteor.publish('current_list', function (list_id) {
+  return Lists.find({_id: list_id});
 });
 
