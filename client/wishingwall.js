@@ -1,9 +1,5 @@
 // Client-side JavaScript, bundled and sent to client.
 
-// Define Minimongo collections to match server/publish.js.
-Lists = new Meteor.Collection("lists");
-Wishes = new Meteor.Collection("wishes");
-
 // ID of currently selected list
 Session.set('list_id', null);
 
@@ -76,6 +72,9 @@ var activateInput = function (input) {
 Template.lists.lists = function () {
   return Lists.find({}, {sort: {name: 1}});
 };
+Template.lists.user_can_create_list = function () {
+	return Meteor.user();
+}
 
 Template.lists.events({
   'mousedown .list': function (evt) { // select list
@@ -97,7 +96,7 @@ Template.lists.events(okCancelEvents(
   '#new-list',
   {
     ok: function (text, evt) {
-      var id = Lists.insert({name: text});
+      var id = Meteor.call("createList", text);	
       Router.setList(id);
       evt.target.value = "";
     }
@@ -138,16 +137,22 @@ Template.wishes.events(okCancelEvents(
   {
     ok: function (text, evt) {
       var tag = Session.get('tag_filter');
-      Wishes.insert({
-        text: text,
-        list_id: Session.get('list_id'),
-        done: false,
-        timestamp: (new Date()).getTime(),
-        tags: tag ? [tag] : []
-      });
+      Meteor.call("createWish", text, Session.get('list_id'), tag ? [tag] : []);
       evt.target.value = '';
     }
   }));
+
+Template.wishes.list_name = function () {
+  // Determine which wishes to display in main pane,
+  // selected based on list_id and tag_filter.
+
+  var list_id = Session.get('list_id');
+  if (!list_id)
+    return "";
+  var list = Lists.findOne({_id:list_id});
+  if (list)
+    return list.name;
+}
 
 Template.wishes.wishes = function () {
   // Determine which wishes to display in main pane,
@@ -162,7 +167,7 @@ Template.wishes.wishes = function () {
   if (tag_filter)
     sel.tags = tag_filter;
 
-  return Wishes.find(sel, {sort: {votes: 1}});
+  return Wishes.find(sel, {sort: {votes: -1}});
 };
 
 Template.wish.tag_objs = function () {
@@ -184,6 +189,9 @@ Template.wish.editing = function () {
   return Session.equals('editing_itemname', this._id);
 };
 
+Template.wish.votes_count = function () {
+	return this.votes.length;
+}
 Template.wish.adding_tag = function () {
   return Session.equals('editing_addtag', this._id);
 };
@@ -196,7 +204,12 @@ Template.wish.events({
   'click .destroy': function () {
     Wishes.remove(this._id);
   },
-
+  'click .voteup': function () {
+    Meteor.call("voteup", this._id);
+  },
+  'click .votedown': function () {
+    Meteor.call("votedown", this._id);
+  },
   'click .addtag': function (evt, tmpl) {
     Session.set('editing_addtag', this._id);
     Meteor.flush(); // update DOM before focus
