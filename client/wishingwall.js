@@ -70,7 +70,7 @@ var activateInput = function (input) {
 ////////// Lists //////////
 
 Template.lists.lists = function () {
-  return Lists.find({}, {sort: {name: 1}});
+  return Lists.findWrapped({}, {sort: {name: 1}});
 };
 Template.lists.user_can_create_list = function () {
 	return Meteor.user();
@@ -136,8 +136,8 @@ Template.wishes.any_list_selected = function () {
 };
 
 Template.wishes.user_can_delete_list = function () {
-        var list = Lists.findOne({_id:Session.get('list_id')});
-	return list && list.owner == Meteor.userId();
+        var list = Lists.findOneWrapped({_id:Session.get('list_id')});
+	return list.belongsTo(Meteor.userId());
 }
 
 
@@ -183,7 +183,7 @@ Template.wishes.wishes = function () {
   if (tag_filter)
     sel.tags = tag_filter;
 
-  return Wishes.find(sel, {sort: {votes: -1}});
+  return Wishes.findWrapped(sel, {sort: {votes: -1}});
 };
 
 Template.wish.tag_objs = function () {
@@ -206,23 +206,23 @@ Template.wish.editing = function () {
 };
 
 Template.wish.votes_count = function () {
-	return this.votes.length;
+	return this.getVotesCount();
 }
 Template.wish.adding_tag = function () {
   return Session.equals('editing_addtag', this._id);
 };
 
 Template.wish.user_can_delete_wish = function () {
-	return this.owner == Meteor.userId() && this.votes.length==0;
+	return this.canBeDeleted(Meteor.userId());
 }
 
 Template.wish.user_can_complete_wish = function () {
-        var list = Lists.findOne({_id:this.list_id});
-	return list.owner == Meteor.userId();
+        var list = Lists.findOneWrapped({_id:this.list_id});
+	return list.belongsTo(Meteor.userId());
 }
 
 Template.wish.user_can_voteup_wish = function () {
-	return _.indexOf(this.votes, Meteor.userId()) ==-1;
+	return !this.hasAsVoter(Meteor.userId());
 }
 
 

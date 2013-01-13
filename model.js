@@ -3,16 +3,19 @@
 //Meteor.WrappedCollection = _.extend(Meteor.Collection);
 
 _.extend(Meteor.Collection.prototype, {
+  item_class: null,
   findOneWrapped: function (){
     var self = this;
     return new self.item_class(self._collection.findOne.apply(self._collection, _.toArray(arguments)))
   },
   findWrapped: function (){
     var self = this;
-    return self._collection.find.apply(self._collection, _.toArray(arguments))    
+    var col = new LocalCollection;
+    col.docs = (self.find.apply(self, _.toArray(arguments))    
        .map(function(data){
 		return new self.item_class(data);
-       });
+       }));
+    return new LocalCollection.Cursor(col, {});
   },
   register: function (cls){
     this.item_class=cls;
@@ -22,12 +25,30 @@ _.extend(Meteor.Collection.prototype, {
 Lists = new Meteor.Collection("lists");
 Wishes = new Meteor.Collection("wishes");
 
-var Wish = function (data) {_.extend(this, data)};
-var List = function (data) {_.extend(this, data)};
-_.extend(List.prototype,{
+Meteor.Model = Backbone.Model.extend({
+        initialize: function (data){
+		_.extend(this, data);
+	},					
 	belongsTo: function (userId){
 		return this.owner == userId;
 	}
+});
+
+var Wish = Meteor.Model.extend({
+        canBeDeleted: function (userId){
+		return this.belongsTo(userId) && !this.hasVotes();
+	},
+	hasVotes: function (){
+           return this.getVotesCount() > 0;
+        },
+	getVotesCount: function (){
+           return this.votes.length;
+        },
+        hasAsVoter: function (userId){
+           return _.indexOf(this.votes, userId)!==-1;
+        }
+});
+var List = Meteor.Model.extend({						
 });
 
 Lists.register(List);
@@ -36,7 +57,7 @@ Wishes.register(Wish);
 if (Meteor.isServer){
 // Publish complete set of lists to all clients.
 Meteor.publish('lists', function () {
-  return Lists.find();
+  return Lists.findWrapped();
 });
 
 
@@ -48,7 +69,7 @@ Meteor.publish('lists', function () {
 
 // Publish all items for requested list_id.
 Meteor.publish('wishes', function (list_id) {
-  return Wishes.find({list_id: list_id});
+  return Wishes.findWrapped({list_id: list_id});
 });
 }
 
@@ -59,7 +80,7 @@ Lists.allow({
   update: function (userId, lists){
     return ! _.any(lists, function (list) {
       // deny if not the owner
-      return list.owner !== userId;
+      return !list.belongsTo(userId)
     });
   },
   remove: function (userId, lists) {
@@ -78,7 +99,7 @@ Wishes.allow({
       var public_allowed = ["tags"];
       if (_.difference(fields, public_allowed).length==0)
 	return true; //Allow everyone to change public fields
-      if (userId !== wish.owner)
+      if (!wish.belongsTo(userId))
         return false; // not the owner
 
       var allowed = ["done"];
@@ -90,7 +111,7 @@ Wishes.allow({
   remove: function (userId, wishes) {
     return ! _.any(wishes, function (wish) {
       // deny if not the owner, or if other people are going
-      return wish.owner !== userId || wish.votes.length > 0;
+      return !wish.belongsTo(userId) || wish.hasVotes();
     });
   }
 });
@@ -124,11 +145,11 @@ Meteor.methods({
   voteup: function (wishId) {
     if (! this.userId)
       throw new Meteor.Error(403, "You must be logged in to Vote");
-    var wish = 	Wishes.findOne(wishId);
+    var wish = 	Wishes.findOneWrapped(wishId);
     if (! wish)
       throw new Meteor.Error(404, "No such wish");
-    var voteIndex = _.indexOf(wish.votes, this.userId);
-    if (voteIndex == -1) {
+    var isVoter = wish.hasAsVoter(this.userId);
+    if (!isVoter) {
       if (Wishes.find({votes: this.userId, list_id: wish.list_id}).count()>=5){
         throw new Meteor.Error(403, "You can't do any more votes");
       }
@@ -141,11 +162,11 @@ Meteor.methods({
   votedown: function (wishId) {
     if (! this.userId)
       throw new Meteor.Error(403, "You must be logged in to Down Vote");
-    var wish = Wishes.findOne(wishId);
+    var wish = Wishes.findOneWrapped(wishId);
     if (! wish)
       throw new Meteor.Error(404, "No such wish");
-    var voteIndex = _.indexOf(wish.votes, this.userId);
-    if (voteIndex !== -1) {
+    var isVoter = wish.hasAsVoter(this.userId);
+    if (isVoter) {
       // add new vote
       Wishes.update(wishId,
                      {$pop: {votes: this.userId}});
