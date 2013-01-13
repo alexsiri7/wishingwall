@@ -1,6 +1,37 @@
 // Lists -- {name: String}
+
+//Meteor.WrappedCollection = _.extend(Meteor.Collection);
+
+_.extend(Meteor.Collection.prototype, {
+  findOneWrapped: function (){
+    var self = this;
+    return new self.item_class(self._collection.findOne.apply(self._collection, _.toArray(arguments)))
+  },
+  findWrapped: function (){
+    var self = this;
+    return self._collection.find.apply(self._collection, _.toArray(arguments))    
+       .map(function(data){
+		return new self.item_class(data);
+       });
+  },
+  register: function (cls){
+    this.item_class=cls;
+  }
+});
+
 Lists = new Meteor.Collection("lists");
 Wishes = new Meteor.Collection("wishes");
+
+var Wish = function (data) {_.extend(this, data)};
+var List = function (data) {_.extend(this, data)};
+_.extend(List.prototype,{
+	belongsTo: function (userId){
+		return this.owner == userId;
+	}
+});
+
+Lists.register(List);
+Wishes.register(Wish);
 
 if (Meteor.isServer){
 // Publish complete set of lists to all clients.
@@ -34,7 +65,7 @@ Lists.allow({
   remove: function (userId, lists) {
     return ! _.any(lists, function (list) {
       // deny if not the owner
-      return list.owner !== userId;
+      return !list.belongsTo(userId)
     });
   }
 });
@@ -80,14 +111,14 @@ Meteor.methods({
   createWish: function (text, list_id, tags) {
     if (! this.userId)
       throw new Meteor.Error(403, "You must be logged in");
-    return Wishes.insert({
+    return Wishes.insert(new Wish({
       owner: this.userId,
       text: text,
       list_id: list_id,
       tags: tags,
       votes: [],
       done: false
-    });
+    }));
   },
 
   voteup: function (wishId) {
@@ -98,6 +129,10 @@ Meteor.methods({
       throw new Meteor.Error(404, "No such wish");
     var voteIndex = _.indexOf(wish.votes, this.userId);
     if (voteIndex == -1) {
+      if (Wishes.find({votes: this.userId, list_id: wish.list_id}).count()>=5){
+        throw new Meteor.Error(403, "You can't do any more votes");
+      }
+
       // add new vote
       Wishes.update(wishId,
                      {$push: {votes: this.userId}});
