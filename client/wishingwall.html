@@ -56,7 +56,9 @@
       {{/each}}
     </ul>
   </div>
-  <input type="button" id="delete-list" placeholder="Delete list" />  
+ {{#if user_can_delete_list}}
+  <input type="button" class="delete-list" value="Delete list" />  
+  {{/if}} 
   {{/if}}
 </template>
 
@@ -67,12 +69,20 @@
         <input id="wish-input" type="text" value="{{text}}" />
       </div>
     {{else}}
+    {{#if user_can_delete_wish}}
       <div class="destroy"></div>
+    {{/if}}
       <div class="display">
+    {{#if user_can_complete_wish}}
         <input class="check" name="markdone" type="checkbox" {{{done_checkbox}}} />
+    {{/if}}
         <div class="wish-text">{{text}} {{votes_count}}</div>
+    {{#if user_can_voteup_wish}}
         <input class="voteup" name="voteup" type="button" value="vote"/>
+    {{else}}
         <input class="votedown" name="votedown" type="button" value="unvote"/>
+    {{/if}}
+
       </div>
     {{/if}}
     <div class="item-tags">

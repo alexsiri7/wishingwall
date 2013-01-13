@@ -96,9 +96,12 @@ Template.lists.events(okCancelEvents(
   '#new-list',
   {
     ok: function (text, evt) {
-      var id = Meteor.call("createList", text);	
-      Router.setList(id);
-      evt.target.value = "";
+      Meteor.call("createList", text, function(error, id){	
+	if (!error){
+          Router.setList(id);
+          evt.target.value = "";
+        }
+      });
     }
   }));
 
@@ -132,6 +135,12 @@ Template.wishes.any_list_selected = function () {
   return !Session.equals('list_id', null);
 };
 
+Template.wishes.user_can_delete_list = function () {
+        var list = Lists.findOne({_id:Session.get('list_id')});
+	return list && list.owner == Meteor.userId();
+}
+
+
 Template.wishes.events(okCancelEvents(
   '#new-wish',
   {
@@ -141,6 +150,13 @@ Template.wishes.events(okCancelEvents(
       evt.target.value = '';
     }
   }));
+
+Template.wishes.events({
+  'click .delete-list': function (evt, tmpl) {
+     Lists.remove({_id:Session.get('list_id')});
+     Session.set('list_id', null);
+  }
+});
 
 Template.wishes.list_name = function () {
   // Determine which wishes to display in main pane,
@@ -196,6 +212,21 @@ Template.wish.adding_tag = function () {
   return Session.equals('editing_addtag', this._id);
 };
 
+Template.wish.user_can_delete_wish = function () {
+	return this.owner == Meteor.userId() && this.votes.length==0;
+}
+
+Template.wish.user_can_complete_wish = function () {
+        var list = Lists.findOne({_id:this.list_id});
+	return list.owner == Meteor.userId();
+}
+
+Template.wish.user_can_voteup_wish = function () {
+	return _.indexOf(this.votes, Meteor.userId()) ==-1;
+}
+
+
+
 Template.wish.events({
   'click .check': function () {
     Wishes.update(this._id, {$set: {done: !this.done}});
@@ -215,7 +246,6 @@ Template.wish.events({
     Meteor.flush(); // update DOM before focus
     activateInput(tmpl.find("#edittag-input"));
   },
-
   'dblclick .display .wish-text': function (evt, tmpl) {
     Session.set('editing_itemname', this._id);
     Meteor.flush(); // update DOM before focus

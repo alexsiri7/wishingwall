@@ -26,11 +26,14 @@ Lists.allow({
     return false; // no cowboy inserts -- use createList method
   },
   update: function (userId, lists){
-    return false;
+    return ! _.any(lists, function (list) {
+      // deny if not the owner
+      return list.owner !== userId;
+    });
   },
   remove: function (userId, lists) {
     return ! _.any(lists, function (list) {
-      // deny if not the owner, or if other people are going
+      // deny if not the owner
       return list.owner !== userId;
     });
   }
@@ -39,12 +42,15 @@ Wishes.allow({
   insert: function (userId, wish) {
     return false; // no cowboy inserts -- use createWish method
   },
-  update: function (userId, parties, fields, modifier) {
+  update: function (userId, wishes, fields, modifier) {
     return _.all(wishes, function (wish) {
+      var public_allowed = ["tags"];
+      if (_.difference(fields, public_allowed).length==0)
+	return true; //Allow everyone to change public fields
       if (userId !== wish.owner)
         return false; // not the owner
 
-      var allowed = ["text"];
+      var allowed = ["done"];
       if (_.difference(fields, allowed).length)
         return false; // tried to write to forbidden field
       return true;
@@ -53,14 +59,10 @@ Wishes.allow({
   remove: function (userId, wishes) {
     return ! _.any(wishes, function (wish) {
       // deny if not the owner, or if other people are going
-      return wish.owner !== userId || votedup(wish) > 0;
+      return wish.owner !== userId || wish.votes.length > 0;
     });
   }
 });
-
-var votedup = function (wish) {
-  return wish.voters.length;
-};
 
 Meteor.methods({
   // options should include: title, description, x, y, public
