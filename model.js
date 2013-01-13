@@ -57,7 +57,7 @@ Wishes.register(Wish);
 if (Meteor.isServer){
 // Publish complete set of lists to all clients.
 Meteor.publish('lists', function () {
-  return Lists.findWrapped();
+  return Lists.find();
 });
 
 
@@ -69,7 +69,7 @@ Meteor.publish('lists', function () {
 
 // Publish all items for requested list_id.
 Meteor.publish('wishes', function (list_id) {
-  return Wishes.findWrapped({list_id: list_id});
+  return Wishes.find({list_id: list_id});
 });
 }
 
@@ -80,13 +80,13 @@ Lists.allow({
   update: function (userId, lists){
     return ! _.any(lists, function (list) {
       // deny if not the owner
-      return !list.belongsTo(userId)
+      return !new List(list).belongsTo(userId)
     });
   },
   remove: function (userId, lists) {
     return ! _.any(lists, function (list) {
       // deny if not the owner
-      return !list.belongsTo(userId)
+      return !new List(list).belongsTo(userId)
     });
   }
 });
@@ -111,7 +111,7 @@ Wishes.allow({
   remove: function (userId, wishes) {
     return ! _.any(wishes, function (wish) {
       // deny if not the owner, or if other people are going
-      return !wish.belongsTo(userId) || wish.hasVotes();
+      return !new Wish(wish).belongsTo(userId) || new Wish(wish).hasVotes();
     });
   }
 });
