@@ -181,6 +181,17 @@ h3 {
     width: 20px;
 }
 
+.list-destroy {
+    cursor: pointer;
+    height: 20px;
+    width: 20px;
+    position: relative;
+    float: right;
+    top: 5px;
+    right: 10px;
+
+}
+
 #item-list .wish .display, #item-list .wish .edit {
     margin-left: 30px;
     height: 100%;
@@ -201,11 +212,11 @@ h3 {
     color: #999;
 }
 
-#item-list .wish:hover .destroy {
+#item-list .wish:hover .destroy, .list-destroy {
     background: url('/destroy.png') no-repeat 0 0;
 }
 
-#item-list .wish .destroy:hover {
+#item-list .wish .destroy:hover, .list-destroy {
     background-position: 0 -20px;
 }
 
@@ -261,3 +272,8 @@ h3 {
     width: 80px;
 }
 
+.help{
+font-size: 0.65em;
+padding: 11px;
+text-align: justify;
+}

@@ -152,7 +152,7 @@ Template.wishes.events(okCancelEvents(
   }));
 
 Template.wishes.events({
-  'click .destroy': function () {
+  'click .list-destroy': function () {
      Lists.remove({_id:Session.get('list_id')});
      Session.set('list_id', null);
   }
@@ -227,7 +227,7 @@ Template.wish.user_can_complete_wish = function () {
 }
 
 Template.wish.user_can_voteup_wish = function () {
-	return Meteor.user() && !this.hasAsVoter(Meteor.userId());
+	return Meteor.user() && !this.list().hasRemainingVotes(Meteor.userId());
 }
 
 

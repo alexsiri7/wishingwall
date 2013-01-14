@@ -14,8 +14,15 @@
   <div id="side-pane">
       {{loginButtons}}
     {{> lists}}
+    {{> help}}
   </div>
 </body>
+
+<template name="help">
+<div class="help">
+Create a list of wishes for something. Then, let others add wishes and vote them, so you can choose the most wanted to fullfill it. 
+</div>
+</template>
 
 <template name="lists">
   <h3>I Wish that...</h3>
@@ -45,7 +52,10 @@
 
 <template name="wishes">
   {{#if any_list_selected}}
-  <h3>I Wish that {{list_name}} would...</h3>
+  <h3> {{#if user_can_delete_list}}
+  <div class="list-destroy"></div>
+  {{/if}} 
+I Wish that {{list_name}} would...</h3>
   <div id="items-view">
   {{#if user_can_create_wish}}
     <div id="new-wish-box">
@@ -58,9 +68,6 @@
       {{/each}}
     </ul>
   </div>
- {{#if user_can_delete_list}}
-  <div class="destroy"></div>
-  {{/if}} 
   {{/if}}
 </template>
 

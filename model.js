@@ -46,9 +46,21 @@ var Wish = Meteor.Model.extend({
         },
         hasAsVoter: function (userId){
            return _.indexOf(this.votes, userId)!==-1;
-        }
+        },
+	list: function (){
+	   return Lists.findOneWrapped(this.list_id);
+	}
 });
-var List = Meteor.Model.extend({						
+var List = Meteor.Model.extend({
+    maximum_votes_per_user: 5,
+    hasRemainingVotes: function (userId){
+       var total_count = 0;
+
+       Wishes.find({votes: userId, list_id: this._id}).forEach(function (wish) {
+         _.each(wish.votes, function (u) {if (u==userId) total_count++});
+       });
+       return total_count>=this.maximum_votes_per_user;
+    }
 });
 
 Lists.register(List);
@@ -148,16 +160,13 @@ Meteor.methods({
     var wish = 	Wishes.findOneWrapped(wishId);
     if (! wish)
       throw new Meteor.Error(404, "No such wish");
-    var isVoter = wish.hasAsVoter(this.userId);
-    if (!isVoter) {
-      if (Wishes.find({votes: this.userId, list_id: wish.list_id}).count()>=5){
+      if (wish.list().hasRemainingVotes(this.userId)){
         throw new Meteor.Error(403, "You can't do any more votes");
       }
 
       // add new vote
       Wishes.update(wishId,
                      {$push: {votes: this.userId}});
-    }
   },
   votedown: function (wishId) {
     if (! this.userId)
