@@ -24,6 +24,7 @@ _.extend(Meteor.Collection.prototype, {
 
 Lists = new Meteor.Collection("lists");
 Wishes = new Meteor.Collection("wishes");
+ListUser = new Meteor.Collection("list_user");
 
 Meteor.Model = Backbone.Model.extend({
         initialize: function (data){
@@ -53,14 +54,26 @@ var Wish = Meteor.Model.extend({
 });
 var List = Meteor.Model.extend({
     maximum_votes_per_user: 5,
-    hasRemainingVotes: function (userId){
+    getCastVotes: function (userId){
        var total_count = 0;
 
        Wishes.find({votes: userId, list_id: this._id}).forEach(function (wish) {
          _.each(wish.votes, function (u) {if (u==userId) total_count++});
        });
-       return total_count>=this.maximum_votes_per_user;
+       return total_count;
+    },
+    hasRemainingVotes: function (userId){
+       return this.getRemainingVotes(userId)>0;
+    },
+    getRemainingVotes: function (userId){
+       return this.maximum_votes_per_user-this.getCastVotes(userId);
+    },
+    getSponsorName: function (){
+        if (ListUser.findOne()){
+		return ListUser.findOne().username		
+	}
     }
+
 });
 
 Lists.register(List);
@@ -82,6 +95,11 @@ Meteor.publish('lists', function () {
 // Publish all items for requested list_id.
 Meteor.publish('wishes', function (list_id) {
   return Wishes.find({list_id: list_id});
+});
+
+Meteor.publish('list_user', function (list_id) {
+  var list = Lists.findOne(list_id);
+  return Meteor.Users.find();
 });
 }
 
@@ -107,14 +125,15 @@ Wishes.allow({
     return false; // no cowboy inserts -- use createWish method
   },
   update: function (userId, wishes, fields, modifier) {
-    return _.all(wishes, function (wish) {
+    return _.all(wishes, function (wishData) {
       var public_allowed = ["tags"];
       if (_.difference(fields, public_allowed).length==0)
 	return true; //Allow everyone to change public fields
+      var wish = new Wish(wishData);
       if (!wish.belongsTo(userId))
         return false; // not the owner
 
-      var allowed = ["done"];
+      var allowed = ["text","done"];
       if (_.difference(fields, allowed).length)
         return false; // tried to write to forbidden field
       return true;
@@ -160,7 +179,7 @@ Meteor.methods({
     var wish = 	Wishes.findOneWrapped(wishId);
     if (! wish)
       throw new Meteor.Error(404, "No such wish");
-      if (wish.list().hasRemainingVotes(this.userId)){
+      if (!wish.list().hasRemainingVotes(this.userId)){
         throw new Meteor.Error(403, "You can't do any more votes");
       }
 

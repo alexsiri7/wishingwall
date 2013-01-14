@@ -277,3 +277,17 @@ font-size: 0.65em;
 padding: 11px;
 text-align: justify;
 }
+
+.list-status-info{
+   width: 95%;
+   overflow: hidden;
+   margin: auto;   
+}
+
+.list-status-info .left{
+   float:left;
+}
+
+.list-status-info .right{
+   float:right;
+}

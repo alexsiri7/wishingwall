@@ -56,6 +56,10 @@ Create a list of wishes for something. Then, let others add wishes and vote them
   <div class="list-destroy"></div>
   {{/if}} 
 I Wish that {{list_name}} would...</h3>
+  <div class="list-status-info">
+  <h5 class="left">You have {{remaining_votes}} votes remaining</h5>
+  <h5 class="right">This list is sponsored by {{list_sponsor}}</h5>
+  </div>
   <div id="items-view">
   {{#if user_can_create_wish}}
     <div id="new-wish-box">

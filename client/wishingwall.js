@@ -135,6 +135,12 @@ Template.wishes.any_list_selected = function () {
   return !Session.equals('list_id', null);
 };
 
+Template.wishes.remaining_votes = function () {
+        var list = Lists.findOneWrapped({_id:Session.get('list_id')});
+	return list.getRemainingVotes(Meteor.userId());
+};
+
+
 Template.wishes.user_can_delete_list = function () {
         var list = Lists.findOneWrapped({_id:Session.get('list_id')});
 	return list.belongsTo(Meteor.userId());
@@ -157,6 +163,15 @@ Template.wishes.events({
      Session.set('list_id', null);
   }
 });
+
+Template.wishes.list_sponsor = function () {
+  var list_id = Session.get('list_id');
+  if (!list_id)
+    return "";
+  var list = Lists.findOneWrapped({_id:list_id});
+  if (list)
+    return list.getSponsorName();
+}
 
 Template.wishes.list_name = function () {
   // Determine which wishes to display in main pane,
@@ -227,7 +242,7 @@ Template.wish.user_can_complete_wish = function () {
 }
 
 Template.wish.user_can_voteup_wish = function () {
-	return Meteor.user() && !this.list().hasRemainingVotes(Meteor.userId());
+	return Meteor.user() && this.list().hasRemainingVotes(Meteor.userId());
 }
 
 
