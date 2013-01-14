@@ -47,9 +47,11 @@
   {{#if any_list_selected}}
   <h3>I Wish that {{list_name}} would...</h3>
   <div id="items-view">
+  {{#if user_can_create_wish}}
     <div id="new-wish-box">
       <input type="text" id="new-wish" placeholder="New wish" />
     </div>
+  {{/if}}
     <ul id="item-list">
       {{#each wishes}}
         {{> wish}}
@@ -57,7 +59,7 @@
     </ul>
   </div>
  {{#if user_can_delete_list}}
-  <input type="button" class="delete-list" value="Delete list" />  
+  <div class="destroy"></div>
   {{/if}} 
   {{/if}}
 </template>
@@ -76,10 +78,11 @@
     {{#if user_can_complete_wish}}
         <input class="check" name="markdone" type="checkbox" {{{done_checkbox}}} />
     {{/if}}
-        <div class="wish-text">{{text}} {{votes_count}}</div>
+        <div class="wish-text">{{text}} ({{votes_count}} votes)</div>
     {{#if user_can_voteup_wish}}
         <input class="voteup" name="voteup" type="button" value="vote"/>
-    {{else}}
+    {{/if}}
+    {{#if user_can_votedown_wish}}
         <input class="votedown" name="votedown" type="button" value="unvote"/>
     {{/if}}
 

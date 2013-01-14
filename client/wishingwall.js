@@ -152,7 +152,7 @@ Template.wishes.events(okCancelEvents(
   }));
 
 Template.wishes.events({
-  'click .delete-list': function (evt, tmpl) {
+  'click .destroy': function () {
      Lists.remove({_id:Session.get('list_id')});
      Session.set('list_id', null);
   }
@@ -168,6 +168,10 @@ Template.wishes.list_name = function () {
   var list = Lists.findOne({_id:list_id});
   if (list)
     return list.name;
+}
+
+Template.lists.user_can_create_wish = function () {
+	return Meteor.user();
 }
 
 Template.wishes.wishes = function () {
@@ -222,10 +226,13 @@ Template.wish.user_can_complete_wish = function () {
 }
 
 Template.wish.user_can_voteup_wish = function () {
-	return !this.hasAsVoter(Meteor.userId());
+	return Meteor.user() && !this.hasAsVoter(Meteor.userId());
 }
 
 
+Template.wish.user_can_votedown_wish = function () {
+	return Meteor.user() && this.hasAsVoter(Meteor.userId());
+}
 
 Template.wish.events({
   'click .check': function () {
