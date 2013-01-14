@@ -170,7 +170,7 @@ Template.wishes.list_name = function () {
     return list.name;
 }
 
-Template.lists.user_can_create_wish = function () {
+Template.wishes.user_can_create_wish = function () {
 	return Meteor.user();
 }
 
@@ -210,7 +210,8 @@ Template.wish.editing = function () {
 };
 
 Template.wish.votes_count = function () {
-	return this.getVotesCount();
+	var votes = this.getVotesCount();
+	return votes+(votes!==1?' votes':' vote');
 }
 Template.wish.adding_tag = function () {
   return Session.equals('editing_addtag', this._id);
