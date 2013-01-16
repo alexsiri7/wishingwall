@@ -122,12 +122,17 @@ I Wish that {{list_name}} would...</h3>
   <li class="comments" style="display:none">
     <ul class="comments">
     {{#each comments}}
-       <li>{{comment}} <i>- {{user}}</i></li>
+       {{> comment}}
     {{/each}}
 	<li><textarea class="new-comment" placeholder="Add comment" cols="60"></textarea></li>
     </ul>
   </li>
 </template>
+
+<template name="comment">
+       <li>{{comment}} <i>- {{user_name}}</i></li>
+</template>
+
 
 <template name="tag_filter">
   <div id="tag-filter" class="tag-list">

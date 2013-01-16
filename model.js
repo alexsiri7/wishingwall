@@ -75,10 +75,23 @@ var List = Meteor.Model.extend({
        return this.maximum_votes_per_user-this.getCastVotes(userId);
     },
     getSponsorName: function (){
-	return ListUser.findOne()
+	return showUserName(this.owner)
     }
-
 });
+
+function showUserName(userId){
+      var user = Meteor.users.findOne(userId);
+      var name="Anonymous";
+      if (!user) return name;
+      if (user.profile && user.profile.name){
+	name = user.profile.name;  
+      } else if (user.username){
+	name = user.username;  
+      } else if ( user.emails &&  user.emails[0]){
+	name = user.emails[0].address;  
+      }
+      return name;
+}
 
 Lists.register(List);
 Wishes.register(Wish);
@@ -100,9 +113,8 @@ Meteor.publish('lists', function () {
 Meteor.publish('wishes', function (list_id) {
   return Wishes.find({list_id: list_id});
 });
-Meteor.publish('list_user', function (list_id) {
-  var list = Lists.findOne(list_id);
-  return Meteor.users.find(list.owner);
+Meteor.publish(null, function (list_id) {
+  return Meteor.users.find({}, {username:1, profile:1});
 });
 }
 
@@ -216,16 +228,8 @@ Meteor.methods({
     }
   },
   createComment: function(text, wishId){
-      var name="Anonymous";
-      if (Meteor.user().profile && Meteor.user().profile.name){
-	  var name = Meteor.user().profile.name;  
-      } else if (Meteor.user().username){
-	var name = Meteor.user().username;  
-      } else if ( Meteor.user().emails &&  Meteor.user().emails[0]){
-	var name = Meteor.user().emails[0].address;  
-      }
       Wishes.update(wishId,
-                     {$push: {comments: {comment:text, user:name}}});
+                     {$push: {comments: {comment:text, user:Meteor.userId()}}});
   }
 
 

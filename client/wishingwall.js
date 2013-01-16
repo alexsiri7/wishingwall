@@ -301,6 +301,10 @@ Template.wish.events({
   }
 });
 
+Template.comment.user_name = function(){
+	return showUserName(this.user);
+}
+
 Template.wish.events(okCancelEvents(
   '#wish-input',
   {
