@@ -97,6 +97,8 @@ I Wish that {{list_name}} would...</h3>
         <input class="votedown" name="votedown" type="button" value="unvote"/>
     {{/if}}
 
+      <span class="toggle-comments">{{comments_count}}</span>
+
       </div>
     {{/if}}
     <div class="item-tags">
@@ -116,6 +118,14 @@ I Wish that {{list_name}} would...</h3>
         </div>
       {{/if}}
     </div>
+  </li>
+  <li class="comments" style="display:none">
+    <ul class="comments">
+    {{#each comments}}
+       <li>{{comment}} <i>- {{user}}</i></li>
+    {{/each}}
+	<li><textarea class="new-comment" placeholder="Add comment" cols="60"></textarea></li>
+    </ul>
   </li>
 </template>
 

@@ -45,6 +45,9 @@ var Wish = Meteor.Model.extend({
 	getVotesCount: function (){
            return this.votes.length;
         },
+        getCommentsCount: function (){
+           return this.comments.length;
+        },
         hasAsVoter: function (userId){
            return _.indexOf(this.votes, userId)!==-1;
         },
@@ -99,7 +102,7 @@ Meteor.publish('wishes', function (list_id) {
 });
 Meteor.publish('list_user', function (list_id) {
   var list = Lists.findOne(list_id);
-  return Meteor.Users.find(list.owner);
+  return Meteor.users.find(list.owner);
 });
 }
 
@@ -211,6 +214,18 @@ Meteor.methods({
       Wishes.update(wishId,
                      {$set: {done: value}});
     }
+  },
+  createComment: function(text, wishId){
+      var name="Anonymous";
+      if (Meteor.user().profile && Meteor.user().profile.name){
+	  var name = Meteor.user().profile.name;  
+      } else if (Meteor.user().username){
+	var name = Meteor.user().username;  
+      } else if ( Meteor.user().emails &&  Meteor.user().emails[0]){
+	var name = Meteor.user().emails[0].address;  
+      }
+      Wishes.update(wishId,
+                     {$push: {comments: {comment:text, user:name}}});
   }
 
 

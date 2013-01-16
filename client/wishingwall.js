@@ -46,7 +46,7 @@ var okCancelEvents = function (selector, callbacks) {
 
   var events = {};
   events['keyup '+selector+', keydown '+selector+', focusout '+selector] =
-    function (evt) {
+    function (evt, temp) {
       if (evt.type === "keydown" && evt.which === 27) {
         // escape = cancel
         cancel.call(this, evt);
@@ -56,9 +56,9 @@ var okCancelEvents = function (selector, callbacks) {
         // blur/return/enter = ok/submit if non-empty
         var value = String(evt.target.value || "");
         if (value)
-          ok.call(this, value, evt);
+          ok.call(this, value, evt, temp);
         else
-          cancel.call(this, evt);
+          cancel.call(this, evt, temp);
       }
     };
   return events;
@@ -230,6 +230,13 @@ Template.wish.votes_count = function () {
 	var votes = this.getVotesCount();
 	return votes+(votes!==1?' votes':' vote');
 }
+
+Template.wish.comments_count = function () {
+	var comments = this.getCommentsCount();
+	return comments+(comments!==1?' comments':' comment');
+}
+
+
 Template.wish.adding_tag = function () {
   return Session.equals('editing_addtag', this._id);
 };
@@ -256,6 +263,9 @@ Template.wish.events({
   'click .check': function () {
     Meteor.call("complete", this._id, !this.done);
   },
+  'click .toggle-comments': function (ev, temp) {
+    $(temp.lastNode).toggle();
+  },
 
   'click .destroy': function () {
     Wishes.remove(this._id);
@@ -272,9 +282,11 @@ Template.wish.events({
     activateInput(tmpl.find("#edittag-input"));
   },
   'dblclick .display .wish-text': function (evt, tmpl) {
-    Session.set('editing_itemname', this._id);
-    Meteor.flush(); // update DOM before focus
-    activateInput(tmpl.find("#wish-input"));
+    if (this.belongsTo(Meteor.userId())){
+      Session.set('editing_itemname', this._id);
+      Meteor.flush(); // update DOM before focus
+      activateInput(tmpl.find("#wish-input"));
+    }
   },
 
   'click .remove': function (evt) {
@@ -300,6 +312,18 @@ Template.wish.events(okCancelEvents(
       Session.set('editing_itemname', null);
     }
   }));
+
+Template.wish.events(okCancelEvents(
+  '.new-comment',
+  {
+    ok: function (text, evt, temp) {
+      Meteor.call("createComment", text, this._id, function(){
+	Meteor.flush();
+      $(temp.lastNode).show();
+      });
+    }
+  }));
+
 
 Template.wish.events(okCancelEvents(
   '#edittag-input',
