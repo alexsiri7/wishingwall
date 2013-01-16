@@ -50,6 +50,9 @@ var Wish = Meteor.Model.extend({
         },
 	list: function (){
 	   return Lists.findOneWrapped(this.list_id);
+	},
+	isOpen: function(){
+		return !this.done;
 	}
 });
 var List = Meteor.Model.extend({
@@ -57,7 +60,7 @@ var List = Meteor.Model.extend({
     getCastVotes: function (userId){
        var total_count = 0;
 
-       Wishes.find({votes: userId, list_id: this._id}).forEach(function (wish) {
+       Wishes.find({votes: userId, list_id: this._id, done: false}).forEach(function (wish) {
          _.each(wish.votes, function (u) {if (u==userId) total_count++});
        });
        return total_count;
@@ -69,9 +72,7 @@ var List = Meteor.Model.extend({
        return this.maximum_votes_per_user-this.getCastVotes(userId);
     },
     getSponsorName: function (){
-        if (ListUser.findOne()){
-		return ListUser.findOne().username		
-	}
+	return ListUser.findOne()
     }
 
 });
@@ -96,10 +97,9 @@ Meteor.publish('lists', function () {
 Meteor.publish('wishes', function (list_id) {
   return Wishes.find({list_id: list_id});
 });
-
 Meteor.publish('list_user', function (list_id) {
   var list = Lists.findOne(list_id);
-  return Meteor.Users.find();
+  return Meteor.Users.find(list.owner);
 });
 }
 
@@ -133,7 +133,7 @@ Wishes.allow({
       if (!wish.belongsTo(userId))
         return false; // not the owner
 
-      var allowed = ["text","done"];
+      var allowed = ["text"];
       if (_.difference(fields, allowed).length)
         return false; // tried to write to forbidden field
       return true;
@@ -199,7 +199,20 @@ Meteor.methods({
       Wishes.update(wishId,
                      {$pop: {votes: this.userId}});
     }
+  },
+  complete: function (wishId, value) {
+    if (! this.userId)
+      throw new Meteor.Error(403, "You must be logged in to Down Vote");
+    var wish = Wishes.findOneWrapped(wishId);
+    if (! wish)
+      throw new Meteor.Error(404, "No such wish");
+    if (wish.list().belongsTo(this.userId)) {
+      // add new vote
+      Wishes.update(wishId,
+                     {$set: {done: value}});
+    }
   }
+
 
 });
 

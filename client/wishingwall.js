@@ -28,8 +28,10 @@ Meteor.subscribe('lists', function () {
 // Always be subscribed to the wishes for the selected list.
 Meteor.autosubscribe(function () {
   var list_id = Session.get('list_id');
-  if (list_id)
+  if (list_id) {
     Meteor.subscribe('wishes', list_id);
+    Meteor.subscribe('list_user', list_id);
+  }
 });
 
 
@@ -132,7 +134,7 @@ Template.lists.editing = function () {
 ////////// wishes //////////
 
 Template.wishes.any_list_selected = function () {
-  return !Session.equals('list_id', null);
+  return !Session.equals('list_id', null) && Lists.findOneWrapped({_id:Session.get('list_id')});
 };
 
 Template.wishes.remaining_votes = function () {
@@ -202,7 +204,7 @@ Template.wishes.wishes = function () {
   if (tag_filter)
     sel.tags = tag_filter;
 
-  return Wishes.findWrapped(sel, {sort: {votes: -1}});
+  return Wishes.findWrapped(sel, {sort: {done: 1, votes: -1}});
 };
 
 Template.wish.tag_objs = function () {
@@ -242,17 +244,17 @@ Template.wish.user_can_complete_wish = function () {
 }
 
 Template.wish.user_can_voteup_wish = function () {
-	return Meteor.user() && this.list().hasRemainingVotes(Meteor.userId());
+	return Meteor.user() && this.isOpen() && this.list().hasRemainingVotes(Meteor.userId());
 }
 
 
 Template.wish.user_can_votedown_wish = function () {
-	return Meteor.user() && this.hasAsVoter(Meteor.userId());
+	return Meteor.user() && this.isOpen() && this.hasAsVoter(Meteor.userId());
 }
 
 Template.wish.events({
   'click .check': function () {
-    Wishes.update(this._id, {$set: {done: !this.done}});
+    Meteor.call("complete", this._id, !this.done);
   },
 
   'click .destroy': function () {
