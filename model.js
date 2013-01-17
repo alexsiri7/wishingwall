@@ -184,6 +184,7 @@ Meteor.methods({
       list_id: list_id,
       tags: tags,
       votes: [],
+      comments: [],
       done: false
     }));
   },

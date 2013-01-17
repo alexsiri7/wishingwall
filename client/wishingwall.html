@@ -91,13 +91,13 @@ I Wish that {{list_name}} would...</h3>
     {{/if}}
         <div class="wish-text">{{text}} ({{votes_count}})</div>
     {{#if user_can_voteup_wish}}
-        <input class="voteup" name="voteup" type="button" value="vote"/>
+        <input class="voteup vote tag" name="voteup" type="button" value="vote"/>
     {{/if}}
     {{#if user_can_votedown_wish}}
-        <input class="votedown" name="votedown" type="button" value="unvote"/>
+        <input class="votedown vote tag" name="votedown" type="button" value="unvote"/>
     {{/if}}
 
-      <span class="toggle-comments">{{comments_count}}</span>
+      <span class="toggle-comments">{{comments_count}} &#x25BC;</span>
 
       </div>
     {{/if}}

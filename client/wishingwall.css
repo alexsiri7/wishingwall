@@ -292,6 +292,28 @@ text-align: justify;
    float:right;
 }
 
+.toggle-comments{
+    font-size: 0.7em;
+}
 .comments{
     padding-left: 86px;
+
 }
+
+textarea{
+padding: 4px;
+border: 1px solid hsl(0, 0%, 60%);
+border-radius: 3px;
+line-height: 1;
+}
+
+.vote{
+   position: relative;
+   top: -7px;
+   border: 1px solid hsl(0, 0%, 47%)
+}
+
+.vote.voteup{
+background: hsl(214, 64%, 63%)
+}
+
